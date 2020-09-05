@@ -1,0 +1,211 @@
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Source Sans Pro", sans-serif;
+  background-color: #46223f;
+  height: 100vh;
+  width: 100vw;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.flex-container {
+  display: flex;
+  width: 90%;
+  margin: 0 auto;
+  justify-content: flex-end;
+}
+
+.middle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px solid purple;
+  color: white;
+  font-size: 3.256rem;
+  box-shadow: inset 50em 1em rgb(10, 20, 74);
+  width: 60%;
+}
+
+.option-container {
+  cursor: pointer;
+}
+
+.money {
+  color: green;
+  font-size: 5rem;
+}
+.questionvalue {
+  width: 15%;
+  color: rgba(227, 109, 36);
+}
+
+.questionvalue span {
+  margin-left: 0.626em;
+}
+
+.questionvalue > p {
+  margin-left: 0.625em;
+
+}
+
+.questionvaluevalue > span {
+  border: 1px solid black;
+}
+
+.option-container {
+  position: relative;
+}
+
+.question {
+  max-width: 980px;
+  min-width: 200px;
+  font-size: 0.955rem;
+  /* font-size: calc(16px + 0.3vw); */
+  border: 1px solid blue;
+  background-color: black;
+  color: white;
+  height: 60px;
+  margin: 0 auto;
+  margin-top: 0;
+  padding: 1.875em 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: justify;
+  clip-path: polygon(
+    1.75% 96%,
+    10.03% 95.37%,
+    60.09% 95.62%,
+    90.18% 95.25%,
+    99.84% 3.88%,
+    12.09% 3.88%
+  );
+}
+.option-flex {
+  position: relative;
+  display: grid;
+  grid: repeat(2, 45px) / auto-flow 180px;
+  justify-content: center;
+  gap: 1.5rem 3.2rem;
+}
+
+.option-flex > div {
+  font-size: 0.955rem;
+  border: 4px solid blue;
+  background-color: black;
+  color: white;
+  max-width: 220px;
+  padding-left: 1.25em;
+  height: 45px;
+  font-size: calc(10px + 0.3vw);
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.btn {
+  width: 10%;
+  max-width: 100px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.fifty-fifty {
+  background-image: url("https://vignette.wikia.nocookie.net/millionaire/images/7/73/Classic5050.png/revision/latest?cb=20160407180209");
+  height: 70px;
+  width: 100%;
+  background-size: cover;
+  cursor: pointer;
+  border-radius: 100%;
+  outline: none;
+}
+
+.ask-audience {
+  background-image: url("https://vignette.wikia.nocookie.net/millionaire/images/c/c6/ClassicATA.png/revision/latest?cb=20160407180412");
+  height: 70px;
+  width: 100%;
+  background-size: cover;
+  cursor: pointer;
+  border-radius: 100%;
+  outline: none;
+}
+
+.call-friend {
+  background-image: url("https://vignette.wikia.nocookie.net/millionaire/images/8/88/ClassicPAF.png/revision/latest?cb=20160407180816");
+  height: 70px;
+  width: 100%;
+  background-size: cover;
+  cursor: pointer;
+  border-radius: 100%;
+  outline: none;
+}
+
+.check {
+  background-image: url("https://vignette.wikia.nocookie.net/millionaire/images/b/b0/Ate.png/revision/latest?cb=20181225075522");
+  height: 80px;
+  width: 100%;
+  background-size: cover;
+  cursor: pointer;
+  border-radius: 100%;
+  outline: none;
+}
+
+.check:hover .tooltiptext {
+  visibility: visible;
+}
+
+.ask-audience-picture {
+  background-color: white;
+  box-shadow: none;
+  width: 60%;
+  overflow: hidden;
+  background-image: url("https://usercontent1.hubstatic.com/13612718_f520.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 600px) {
+  .question {
+    clip-path: unset;
+  }
+  .flex-container {
+    justify-content: space-between;
+  }
+  .btn {
+    width: 20%;
+  }
+  .questionvalue {
+    width: 20%;
+  }
+}
+
+@media (max-width: 938px) {
+  .flex-container {
+    justify-content: space-evenly;
+  }
+  .btn {
+    width: 20%;
+  }
+  .questionvalue {
+    width: 20%;
+  }
+}

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 
-function Questionvalue() {
+function Questionvalue({ questionCount, dispatch }) {
   const questionValue = [
     "1 Million",
     "$500 000",
@@ -18,11 +18,30 @@ function Questionvalue() {
     "$200",
     "$100",
   ];
+  useEffect(() => {
+    dispatch({
+      type: "showMoney",
+      payload: {
+        currentMoneyWon: questionValue[questionValue.length - questionCount],
+      },
+    });
+  }, [questionCount]);
+
   return (
     <>
       <div className="questionvalue">
         {questionValue.map((sum, index) => {
-          return <p key={index}>{sum}</p>;
+          return (
+            <p
+              style={{
+                backgroundColor:
+                  index === questionValue.length - questionCount ? "blue" : "",
+              }}
+              key={index}
+            >
+              {sum}
+            </p>
+          );
         })}
       </div>
     </>

@@ -20,15 +20,5 @@ const setFiftyFifty = (arr, str) => {
     return arr;
   }
 
-  const removeClass = () => {
-    const doc = document.getElementsByClassName("middle-container")[0];
-    doc.classList.remove("ask-audience-picture");
-  };
 
-  const decodeString =(str) => {
-    const textArea = document.createElement("textarea");
-    textArea.innerHTML = str;
-    return textArea.value;
-  }
-
-  export { setFiftyFifty, removeClass, decodeString }
+  export { setFiftyFifty }

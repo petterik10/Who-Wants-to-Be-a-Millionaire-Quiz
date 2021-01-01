@@ -1,48 +1,57 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import AskAudience from "./AskAudience";
 
-function MiddleSection(props) {
-  useEffect(() => {
-    if (props.timeLeft === 0) {
-      removeTimer();
-    }
-  }, [props.timeLeft]);
+function MiddleSection({
+  call,
+  lifeline,
+  askAudience,
+  audienceCount,
+  answer,
+  currentMoneyWon,
+}) {
+  const [timeLeft, setTimeLeft] = useState(25 * 1000);
 
   useEffect(() => {
-    if (props.call) {
-      document.getElementsByClassName("call-friend")[0].style.backgroundImage =
-        "url('https://vignette.wikia.nocookie.net/millionaire/images/4/4a/ClassicPAFused.png/revision/latest/top-crop/width/300/height/300?cb=20160407180838')";
+    if (call) {
       const newIntervalId = setInterval(() => {
-        props.timer((preValue) => {
+        setTimeLeft((preValue) => {
           if (preValue === 0) return;
           return preValue - 1000;
         });
       }, 1000);
       return () => clearInterval(newIntervalId);
-    } else {
-      document.getElementsByClassName("call-friend")[0].style.backgroundImage =
-        "url('https://vignette.wikia.nocookie.net/millionaire/images/8/88/ClassicPAF.png/revision/latest?cb=20160407180816')";
     }
   });
 
-  function removeTimer() {
-    const timer = document.getElementsByClassName("timer")[0];
-    timer.style.visibility = "hidden";
-  }
+  useEffect(() => {
+    if (timeLeft === 0) {
+      return;
+    }
+  }, [timeLeft]);
+
   const timeConverter = () => {
-    let seconds = props.timeLeft / 1000;
+    let seconds = timeLeft / 1000;
     return `${seconds}`;
   };
+
   return (
     <div className="middle-container">
-      {props.answer}
-      <div className="money">{props.currentMoneyWon}</div>
-      <div
-        className="timer"
-        style={{ visibility: props.call ? "visible" : "hidden" }}
-      >
-        {" "}
-        {timeConverter(props.timeLeft)}
-      </div>
+      {lifeline === "ask-audience" && askAudience && audienceCount === 1 ? (
+        <AskAudience/>
+      ) : (
+        <div>
+          {answer}
+          <div className="money">{currentMoneyWon}</div>
+          <div
+            className="timer"
+            style={{
+              visibility: call && timeLeft > 1 ? "visible" : "hidden",
+            }}
+          >
+            {timeConverter(timeLeft)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

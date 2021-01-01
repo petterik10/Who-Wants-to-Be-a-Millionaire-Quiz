@@ -1,203 +1,293 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useReducer } from "react";
 import Questionvalue from "./Questionvalue";
 import Options from "./Options";
 import MiddleSection from "./MiddleSection";
-import { setFiftyFifty, removeClass } from "../script";
+import CheckAnswer from "./CheckAnswer";
+import { setFiftyFifty } from "../script";
 import Lifelines from "./Lifelines";
 import he from "he";
 
-function App() {
-  const [million, setMillion] = useState({
-    question: "",
-    options: ["", "", "", ""],
-  });
+function reducer(state, action) {
+  switch (action.type) {
+    case "firstLoad": {
+      return {
+        ...state,
+        rightAnswer: he.decode(action.payload.correctAnswer),
+        money: "$100",
+        answer: "",
+        clickedAnsw: "",
+        keyPress: true,
+        fiftyFiftyLifeline: false,
+        callLifeline: false,
+        callaskAudienceCount: 0,
+        callFriendCount: 0,
+        questions: [...action.payload.questions],
+        million: {
+          question: he.decode(action.payload.million),
+          options: [...action.payload.options],
+        },
+        askTheAudience: false,
+        lifeline: "",
+        showRightAnswer: false,
+        setItWasNotCorrect: false,
+      };
+    }
+    case "clickedAnswer": {
+      return {
+        ...state,
+        clickedAnsw: action.payload.clickedAnswer,
+      };
+    }
+    case "showResult": {
+      return {
+        ...state,
+        answer: "That was correct",
+        showRightAnswer: true,
+        lifeline: "",
+      };
+    }
 
-  const [questions, setQuestions] = useState([]);
-  const [clickedAnswer, setClickedAnswer] = useState("");
-  const [questionCount, setQuestionCount] = useState(1);
-  const [rightAnswer, setRightAnswer] = useState("");
-  const [fiftyFiftyLifeline, setFiftyFiftyLifeline] = useState(false);
-  const [callLifeline, setTheCall] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30 * 1000);
-  const [money, setMoney] = useState("$100");
-  const [answer, setAnswer] = useState("");
-  const [keyPress, setKeyPress] = useState(false);
-  const [askAudience, setAskAudience] = useState(false);
+    case "setItWasNotCorrect": {
+      return {
+        ...state,
+        setItWasNotCorrect: true,
+        answer: "That was incorrect. Press any key to restart",
+        money: "",
+        keyPress: true,
+        lifeline: "",
+      };
+    }
+    case "newQuestion": {
+      const correctAnswer = he.decode(
+        state.questions[state.questionCount].correct_answer
+      );
+      const incorrectAnswers =
+        state.questions[state.questionCount].incorrect_answers;
+      const newQuestions = [...incorrectAnswers, correctAnswer].map((elem) => {
+        return he.decode(elem);
+      });
+      return {
+        ...state,
+        questionCount: state.questionCount + 1,
+        rightAnswer: correctAnswer,
+        answer: "",
+        lifeline: "",
+        showRightAnswer: false,
+        million: {
+          question: he.decode(state.questions[state.questionCount].question),
+          options: newQuestions.sort(() => Math.random() - 0.5),
+        },
+      };
+    }
+
+    case "showMoney": {
+      return {
+        ...state,
+        money: action.payload.currentMoneyWon,
+      };
+    }
+
+    case "gameOver": {
+      const templateAnswer = `That was incorrect. Press any key to restart`;
+      return {
+        ...state,
+        answer: templateAnswer,
+        money: "",
+        keyPress: true,
+      };
+    }
+    case "KeyDown": {
+      return {
+        ...state,
+        keyPress: false,
+        questionCount: 1,
+      };
+    }
+
+    case "FiftyFiftytoTrue": {
+      return {
+        ...state,
+        fiftyFiftyLifeline: true,
+      };
+    }
+
+    case "FiftyFifty": {
+      return {
+        ...state,
+        million: {
+          question: action.payload.question,
+          options: action.payload.fiftyfifty,
+        },
+      };
+    }
+
+    case "AskAudience": {
+      return {
+        ...state,
+        askTheAudience: true,
+        lifeline: action.payload.askAudience,
+      };
+    }
+
+    case "CallFriend": {
+      return {
+        ...state,
+        callLifeline: true,
+      };
+    }
+    case "CallFriendToFalse": {
+      return {
+        ...state,
+        callLifeline: false,
+      };
+    }
+    case "Winner": {
+      return {
+        answer: "Congratulations, You made it!, Press any key to restart",
+        keyPress: true,
+        million: { question: "", options: [] },
+        money: "",
+      };
+    }
+    default:
+      return state;
+  }
+}
+
+const initialState = {
+  million: { question: "", options: [] },
+  clickedAnswer: "",
+  questionCount: 1,
+  rightAnswer: "",
+  fiftyFiftyLifeline: false,
+  callLifeline: false,
+  timeLeft: 30 * 1000,
+  callaskAudienceCount: 0,
+  callFriendCount: 0,
+  money: "100",
+  answer: "",
+  keyPress: false,
+  askTheAudience: false,
+  questions: [],
+  lifeline: "",
+  showRightAnswer: false,
+  setItWasNotCorrect: false,
+};
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    if (!keyPress) {
+    if (!state.keyPress) {
       fetch("https://opentdb.com/api.php?amount=16&type=multiple")
         .then((res) => res.json())
         .then((res) => {
           const correctAnswer = res.results[0].correct_answer;
-          console.log(correctAnswer);
-          setRightAnswer(he.decode(correctAnswer));
-          setMoney("$100");
-          setAnswer("");
-          setFiftyFiftyLifeline(false);
-          setAskAudience(false);
-          setTheCall(false);
+          //console.log(correctAnswer)
           const incorrectAnswers = res.results[0].incorrect_answers;
           const options = [...incorrectAnswers, correctAnswer]
             .map((elem) => {
               return he.decode(elem);
             })
             .sort(() => Math.random() - 0.5);
-          setQuestions(res.results);
-          setMillion({
-            question: he.decode(res.results[0].question),
-            options: options,
+          const allTheQuestions = res.results;
+          dispatch({
+            type: "firstLoad",
+            payload: {
+              correctAnswer: correctAnswer,
+              questions: allTheQuestions,
+              million: allTheQuestions[0].question,
+              options: options,
+            },
           });
         });
     }
-    if (keyPress) {
+    if (state.keyPress) {
       document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [keyPress]);
+  }, [state.keyPress]);
 
   useEffect(() => {
-    if (fiftyFiftyLifeline) {
-      document.getElementsByClassName("fifty-fifty")[0].style.backgroundImage =
-        "url('https://vignette.wikia.nocookie.net/millionaire/images/1/1e/Classic5050used.png/revision/latest?cb=20160407180240')";
-    } else {
-      document.getElementsByClassName("fifty-fifty")[0].style.backgroundImage =
-        "url('https://vignette.wikia.nocookie.net/millionaire/images/7/73/Classic5050.png/revision/latest?cb=20160407180209')";
+    if (state.fiftyFiftyLifeline) {
+      const fiftyFiftyOptions = setFiftyFifty(
+        state.million.options,
+        state.rightAnswer
+      );
+      dispatch({
+        type: "FiftyFifty",
+        payload: {
+          fiftyfifty: fiftyFiftyOptions,
+          question: state.million.question,
+        },
+      });
     }
-  }, [fiftyFiftyLifeline]);
-
-  useEffect(() => {
-    if (questionCount === 16) return;
-    const value = document.getElementsByClassName("questionvalue")[0];
-    value.children[
-      value.children.length - questionCount
-    ].style.backgroundColor = "blue";
-    setMoney(
-      `${value.children[value.children.length - questionCount].textContent}`
-    );
-    return () => {
-      value.children[
-        value.children.length - questionCount
-      ].style.backgroundColor = "";
-    };
-  }, [million]);
-
-  useEffect(() => {
-    if (askAudience) {
-      setMoney("");
-      document
-        .getElementsByClassName("middle-container")[0]
-        .classList.add("ask-audience-picture");
-      document.getElementsByClassName("ask-audience")[0].style.backgroundImage =
-        "url('https://vignette.wikia.nocookie.net/millionaire/images/9/97/ClassicATAused.png/revision/latest/scale-to-width-down/150?cb=20160407180750')";
-    } else {
-      document.getElementsByClassName("ask-audience")[0].style.backgroundImage =
-        "url('https://vignette.wikia.nocookie.net/millionaire/images/c/c6/ClassicATA.png/revision/latest?cb=20160407180412')";
-    }
-    return () => {
-      document
-        .getElementsByClassName("middle-container")[0]
-        .classList.remove("ask-audience-picture");
-    };
-  }, [askAudience]);
+  }, [state.fiftyFiftyLifeline]);
 
   const handleKeyDown = () => {
-    setKeyPress(false);
-    setQuestionCount(1);
-    setTheCall(false);
-    setTimeLeft(30 * 1000);
+    dispatch({ type: "KeyDown" });
   };
 
   const handleFiftyFifty = () => {
-    if (!fiftyFiftyLifeline) {
-      const fiftyFiftyOptions = setFiftyFifty(million.options, rightAnswer);
-      setMillion((preValue) => {
-        return {
-          ...preValue,
-          options: fiftyFiftyOptions,
-        };
-      });
-      setFiftyFiftyLifeline(true);
-    }
+    dispatch({ type: "FiftyFiftytoTrue" });
   };
 
-  const handleClickAnswer = (clickedOption) => {
-    setClickedAnswer(clickedOption);
+  const handleClickedAnswer = (clickedOption) => {
+    dispatch({
+      type: "clickedAnswer",
+      payload: {
+        clickedAnswer: clickedOption,
+      },
+    });
   };
 
   const newQuestion = () => {
-    if (questionCount === 15) {
-      setAnswer("Congratulations, You made it!, Press any key to restart");
-      setKeyPress(true);
-      setMillion({ question: "", options: ["", "", "", ""] });
-      setMoney("");
-      return;
+    if (state.questionCount === 15) {
+      dispatch({ type: "Winner" });
     } else {
-      const correctAnswer = he.decode(questions[questionCount].correct_answer);
-      console.log(correctAnswer);
-      setRightAnswer(he.decode(questions[questionCount].correct_answer));
-      const incorrectAnswers = questions[questionCount].incorrect_answers;
-      const newQuestions = [...incorrectAnswers, correctAnswer].map((elem) => {
-        return he.decode(elem);
+      dispatch({
+        type: "newQuestion",
       });
-      setMillion({
-        question: he.decode(questions[questionCount].question),
-        options: newQuestions.sort(() => Math.random() - 0.5),
-      });
-      setAnswer("");
     }
   };
 
   const showResult = () => {
-    if (askAudience) {
-      removeClass();
-    }
-    setAnswer("That was correct");
-    const options = document.getElementsByClassName("option-flex")[0];
-    for (let i = 0; i < options.children.length; i++) {
-      if (options.children[i].textContent === rightAnswer) {
-        options.children[i].style.backgroundColor = "green";
-      }
-    }
+    dispatch({ type: "showResult" });
   };
 
   const showTheCorrectAnswer = () => {
-    if (askAudience) {
-      removeClass();
-    }
-    const templateAnswer = `That was incorrect. Press any key to restart`;
-    const options = document.getElementsByClassName("option-flex")[0];
-    for (let i = 0; i < options.children.length; i++) {
-      if (options.children[i].textContent === rightAnswer) {
-        options.children[i].style.backgroundColor = "green";
-      }
-      if (options.children[i].style.backgroundColor === "orange") {
-        options.children[i].style.backgroundColor = "red";
-      }
-    }
-    setAnswer(templateAnswer);
-    setKeyPress(true);
-    setMoney("");
+    dispatch({ type: "setItWasNotCorrect" });
   };
 
   const checkAnswer = () => {
-    if (clickedAnswer === rightAnswer) {
+    if (state.clickedAnsw === state.rightAnswer) {
+      console.log("Hello");
       setTimeout(showResult, 2000);
-      setQuestionCount(questionCount + 1);
       setTimeout(newQuestion, 4000);
     } else {
       setTimeout(showTheCorrectAnswer, 2000);
     }
   };
 
-  const handleCall = () => {
-    setTheCall(true);
+  const handleCallFriend = () => {
+    dispatch({
+      type: "CallFriend",
+      payload: {
+        count: state.callFriendCount++,
+      },
+    });
   };
 
-  const askTheAudience = () => {
-    setAskAudience(true);
+  const handleLifeLine = (lifeline) => {
+    dispatch({
+      type: "AskAudience",
+      payload: {
+        askAudience: lifeline,
+        count: state.callaskAudienceCount++,
+      },
+    });
   };
 
   return (
@@ -205,28 +295,57 @@ function App() {
       <div>
         <div className="flex-container">
           <div className="btn">
-            <Lifelines class="fifty-fifty" lifeLine={handleFiftyFifty} />
-            <Lifelines class="ask-audience" lifeLine={askTheAudience} />
-            <Lifelines class="call-friend" lifeLine={handleCall} />
             <Lifelines
-              class="check"
-              lifeLine={checkAnswer}
-              text="Check the answer"
+              class="fifty-fifty"
+              name="fifty-fifty"
+              lifeline={handleFiftyFifty}
+              state={state.fiftyFiftyLifeline}
+              image="https://vignette.wikia.nocookie.net/millionaire/images/7/73/Classic5050.png/revision/latest?cb=20160407180209"
+              another="https://vignette.wikia.nocookie.net/millionaire/images/1/1e/Classic5050used.png/revision/latest?cb=20160407180240"
             />
+            <Lifelines
+              class="ask-audience"
+              name="ask-audience"
+              state={state.askTheAudience}
+              lifeline={handleLifeLine}
+              image="https://vignette.wikia.nocookie.net/millionaire/images/c/c6/ClassicATA.png/revision/latest?cb=20160407180412"
+              another="https://vignette.wikia.nocookie.net/millionaire/images/9/97/ClassicATAused.png/revision/latest/scale-to-width-down/150?cb=20160407180750"
+            />
+
+            <Lifelines
+              class="call-friend"
+              name="call-friend"
+              lifeline={handleCallFriend}
+              state={state.callLifeline}
+              image="https://vignette.wikia.nocookie.net/millionaire/images/8/88/ClassicPAF.png/revision/latest?cb=20160407180816"
+              another="https://vignette.wikia.nocookie.net/millionaire/images/4/4a/ClassicPAFused.png/revision/latest/top-crop/width/300/height/300?cb=20160407180838"
+            />
+
+            <CheckAnswer checkAnswer={checkAnswer} />
           </div>
+
           <MiddleSection
-            answer={answer}
-            currentMoneyWon={money}
-            timeLeft={timeLeft}
-            call={callLifeline}
-            timer={setTimeLeft}
+            answer={state.answer}
+            currentMoneyWon={state.money}
+            call={state.callLifeline}
+            audienceCount={state.callaskAudienceCount}
+            lifeline={state.lifeline}
+            askAudience={state.askTheAudience}
+            callCount={state.callFriendCount}
           />
-          <Questionvalue />
+          <Questionvalue
+            questionCount={state.questionCount}
+            dispatch={dispatch}
+          />
         </div>
         <Options
-          millionQuestion={million.question}
-          handleClickAnswer={handleClickAnswer}
-          newMillionQuestion={million}
+          millionQuestion={state.million.question}
+          handleClickedAnswer={handleClickedAnswer}
+          newMillionQuestion={state.million.options}
+          clickedAnswer={state.clickedAnsw}
+          showRightAnswer={state.showRightAnswer}
+          setItwasNotCorrect={state.setItWasNotCorrect}
+          correctAnswer={state.rightAnswer}
         />
       </div>
     </>
